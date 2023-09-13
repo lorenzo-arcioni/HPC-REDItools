@@ -1,0 +1,8 @@
+#SBATCH --job-name=PA_proc-start
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=5GB
+#SBATCH --time=00:30:00
+#SBATCH --output=general.out
+#SBATCH --error=general.err
+

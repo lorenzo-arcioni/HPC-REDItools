@@ -1,0 +1,30 @@
+inputpath="{}"
+threads={}
+reference="{}"
+#########################
+#Create input folder with input file inside
+#Translate the inputfile
+#Get all the headers and put them in headers file
+#########################
+
+python -m reditools -h 1>/dev/null
+
+
+if [ $? -gt 0 ]
+    then
+        echo "Some errors are occurred. Please check them in start error file (.err)"
+    exit 1
+fi
+
+grep ">" -i "$reference" > headers.txt
+#########################
+
+#Updating log file
+echo "Starting timestamp#""$(date +'%Y-%m-%d %H:%M:%S')" >> ./general.log
+echo Input file path: $inputpath >> ./general.log
+echo Processes: $processes >> ./general.log
+echo Reference: $reference >> ./general.log
+echo Chromosomes: $(grep ">" -i headers.txt -c) >> ./general.log
+#Run the processes
+/usr/bin/time -f "%E" python3 read.py
+

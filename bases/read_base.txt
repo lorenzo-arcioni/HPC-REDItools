@@ -1,0 +1,81 @@
+import sys
+import os
+import shutil
+import subprocess as sp
+		
+def main():
+	"""
+	This function executes a pipeline to run the reditools software on a given input directory with 
+	specified reference, threads, processes, and workload manager. It creates a temporary directory and 
+	executes multiple processes in parallel. The output files are created with the final_redi.tsv file 
+	and a general.log file. 
+	
+	Parameters:
+		None
+	
+	Returns:
+		None
+	"""
+
+	inputdir   = "{}"
+	reference  = "{}"
+	threads    = "{}"
+	wlm        = "{}"
+
+	pwd           = os.getcwd() # Get current path
+	pwd = tmpdir  = os.path.join(pwd, "tmp") # Add to path the directory name
+
+	# Creation of the tmp dir
+	if os.path.exists(pwd):  # If tmp already exists delete all file inside it
+		shutil.rmtree("tmp")
+
+	os.mkdir("tmp")
+	os.chdir(tmpdir)
+
+	bam_files = [x for x in os.listdir(inputdir) if x.endswith(".bam")]
+
+
+	# Creation of the processes execution files
+	for idx, bam_file in enumerate(bam_files):
+		os.mkdir(str(idx))
+		os.chdir(str(idx))
+		
+		with open("script.sh", 'w', encoding='utf-8') as script:
+			script.write("#!/bin/bash" + '\n')
+
+			script.write("{}") # Workload manager header
+
+			if wlm == "slurm":
+				script.write("#SBATCH --cpus-per-task=" + str(threads) + '\n')
+				script.write("#SBATCH --job-name=PA_proc-" + str(idx) + '\n')
+
+
+			script.write("/usr/bin/time -f \"%e\" python -m reditools \"" + str(inputdir + "/" + bam_file) + \
+														"\" -r " + str(reference) + " -o ../\"" + bam_file + "\".reditools.tsv -t " + \
+																	str(threads) + " {}" + "\n") 
+			script.write("touch finish_flag")
+			script.close()
+
+		sp.call("chmod 777 ./script.sh", shell=True)	 #Make executable the script
+
+		#Run the script
+		if wlm == "slurm":
+			sp.call("sbatch ./script.sh", shell=True)
+		elif wlm == "htcondor":
+			pass
+		else:
+			sp.call("bash ./script.sh 2> general.err &", shell=True)
+
+		os.chdir("../")
+	os.chdir("../")
+	
+	#Run the control script
+	if wlm == "slurm":
+		sp.call("sbatch ./control_script.sh", shell=True)
+	elif wlm == "htcondor":
+		pass
+	else:
+		sp.call("bash ./control_script.sh", shell=True)
+
+if __name__ == '__main__':
+    sys.exit(main())

@@ -1,0 +1,8 @@
+[project]
+name = "reditools"
+version = "0.1"
+dependencies = [
+    "sortedcontainers",
+    "netifaces",
+    "pysam",
+]
